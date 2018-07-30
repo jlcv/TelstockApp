@@ -5,8 +5,6 @@ import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.view.MenuItem
-import com.jchavez.telstockapp.R.id.detail_toolbar
-import com.jchavez.telstockapp.R.id.fab
 import kotlinx.android.synthetic.main.activity_photoitem_detail.*
 
 /**
@@ -17,14 +15,24 @@ import kotlinx.android.synthetic.main.activity_photoitem_detail.*
  */
 class PhotoItemDetailActivity : AppCompatActivity() {
 
+    private var itemId: Int = -1
+    private lateinit var itemTitle: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photoitem_detail)
+        detail_toolbar.title = resources.getString(R.string.title_photo_item_detail)
         setSupportActionBar(detail_toolbar)
 
+        itemId = intent.getIntExtra(ARG_ITEM_ID, -1)
+        itemTitle = intent.getStringExtra(ARG_ITEM_TITLE)
+
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own detail action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+            val intent = Intent(view.context, PhotoItemEditActivity::class.java)
+            intent.putExtra(ARG_MODE, ARG_EDIT_MODE)
+            intent.putExtra(ARG_ITEM_TITLE, itemTitle)
+            intent.putExtra(ARG_ITEM_ID, itemId)
+            view.context.startActivity(intent)
         }
 
         // Show the Up button in the action bar.
@@ -44,8 +52,12 @@ class PhotoItemDetailActivity : AppCompatActivity() {
             // using a fragment transaction.
             val fragment = PhotoItemDetailFragment().apply {
                 arguments = Bundle().apply {
-                    putString(PhotoItemDetailFragment.ARG_ITEM_ID,
-                            intent.getStringExtra(PhotoItemDetailFragment.ARG_ITEM_ID))
+                    putInt(ARG_ITEM_ID,
+                            intent.getIntExtra(ARG_ITEM_ID, -1))
+                    putString(ARG_ITEM_TITLE,
+                            intent.getStringExtra(ARG_ITEM_TITLE))
+                    putString(ARG_ITEM_URL,
+                            intent.getStringExtra(ARG_ITEM_URL))
                 }
             }
 
@@ -69,4 +81,12 @@ class PhotoItemDetailActivity : AppCompatActivity() {
                 }
                 else -> super.onOptionsItemSelected(item)
             }
+
+    companion object {
+        const val ARG_ITEM_TITLE = "item_title"
+        const val ARG_EDIT_MODE = "edit_mode"
+        const val ARG_MODE = "mode"
+        const val ARG_ITEM_ID = "item_id"
+        const val ARG_ITEM_URL = "item_url"
+    }
 }

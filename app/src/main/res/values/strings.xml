@@ -1,4 +1,17 @@
 <resources>
-    <string name="app_name">TelstockApp</string>
-    <string name="title_photoitem_detail">PhotoItem Detail</string>
+    <string name="app_name">Galería</string>
+    <string name="title_photo_item_detail">Detalles</string>
+
+    <!--PhotoItemEditActivity-->
+    <string name="title_label">Título</string>
+    <string name="image_label">Imagen</string>
+    <string name="accept">Aceptar</string>
+    <string name="select_image">Seleccionar imagen</string>
+    <string name="edit">Editar</string>
+    <string name="add">Crear</string>
+    <string name="deleteMessage">Seguro que deseas eliminar la imagen?</string>
+    <string name="validationFailedMessage">Falta agregar título a la imagen</string>
+    <string name="alert">Alerta</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirmDeleteMessage">Deseas eliminar esta foto?</string>
 </resources>

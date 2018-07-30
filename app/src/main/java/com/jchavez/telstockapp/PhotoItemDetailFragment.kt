@@ -5,8 +5,7 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.jchavez.telstockapp.dummy.DummyContent
-import kotlinx.android.synthetic.main.activity_photoitem_detail.*
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.photoitem_detail.view.*
 
 /**
@@ -20,18 +19,16 @@ class PhotoItemDetailFragment : Fragment() {
     /**
      * The dummy content this fragment is presenting.
      */
-    private var item: DummyContent.DummyItem? = null
+    private lateinit var itemUrl: String
+    private lateinit var itemTitle: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            if (it.containsKey(ARG_ITEM_ID)) {
-                // Load the dummy content specified by the fragment
-                // arguments. In a real-world scenario, use a Loader
-                // to load content from a content provider.
-                item = DummyContent.ITEM_MAP[it.getString(ARG_ITEM_ID)]
-                activity?.toolbar_layout?.title = item?.content
+            if (it.containsKey(ARG_ITEM_URL)) {
+                itemUrl = it.getString(ARG_ITEM_URL)
+                itemTitle = it.getString(ARG_ITEM_TITLE)
             }
         }
     }
@@ -39,11 +36,8 @@ class PhotoItemDetailFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.photoitem_detail, container, false)
-
-        // Show the dummy content as text in a TextView.
-        item?.let {
-            rootView.photoitem_detail.text = it.details
-        }
+        rootView.detailTextView.text = itemTitle
+        Picasso.get().load(itemUrl).placeholder(android.R.drawable.ic_menu_gallery).into(rootView.detailImageView)
 
         return rootView
     }
@@ -54,5 +48,7 @@ class PhotoItemDetailFragment : Fragment() {
          * represents.
          */
         const val ARG_ITEM_ID = "item_id"
+        const val ARG_ITEM_TITLE = "item_title"
+        const val ARG_ITEM_URL = "item_url"
     }
 }

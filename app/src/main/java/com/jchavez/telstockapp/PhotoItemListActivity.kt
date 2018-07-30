@@ -5,12 +5,19 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
 import android.support.design.widget.Snackbar
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 
-import com.jchavez.telstockapp.dummy.DummyContent
+import com.jchavez.telstockapp.models.PhotoItem
+import com.jchavez.telstockapp.retrofit.ApiService
+import com.jchavez.telstockapp.retrofit.PhotosResult
+import com.squareup.picasso.Picasso
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photoitem_list.*
 import kotlinx.android.synthetic.main.photoitem_list_content.view.*
 import kotlinx.android.synthetic.main.photoitem_list.*
@@ -30,17 +37,18 @@ class PhotoItemListActivity : AppCompatActivity() {
      * device.
      */
     private var twoPane: Boolean = false
+    private val apiService = ApiService.create()
+    private val tagPhotos = "PHOTOS"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photoitem_list)
-
         setSupportActionBar(toolbar)
-        toolbar.title = title
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+            val intent = Intent(view.context, PhotoItemEditActivity::class.java)
+            intent.putExtra(ARG_MODE, ARG_ADD_MODE)
+            view.context.startActivity(intent)
         }
 
         if (photoitem_detail_container != null) {
@@ -51,15 +59,44 @@ class PhotoItemListActivity : AppCompatActivity() {
             twoPane = true
         }
 
-        setupRecyclerView(photoitem_list)
+        getPhotos()
     }
 
-    private fun setupRecyclerView(recyclerView: RecyclerView) {
-        recyclerView.adapter = SimpleItemRecyclerViewAdapter(this, DummyContent.ITEMS, twoPane)
+    private fun getPhotos() {
+        apiService.photos()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(this::successPhotos, this::handleErrors)
+    }
+
+    private fun successPhotos(result: List<PhotoItem>) {
+        if (result.count() == 0) {
+            Log.d(tagPhotos, "No photos")
+        } else {
+            Log.d(tagPhotos, "Got results!")
+            Log.d(tagPhotos, result.toString())
+            result.forEach {
+                Log.d(tagPhotos, it.title)
+            }
+            setupRecyclerView(photoitem_list, result)
+        }
+    }
+
+    private fun handleErrors(error: Throwable?) {
+        val code = error.toString()
+        Log.e(TAG_ERROR, code)
+        when (code) {
+            "401" -> print(code)
+            else -> print(code)
+        }
+    }
+
+    private fun setupRecyclerView(recyclerView: RecyclerView, result: List<PhotoItem>) {
+        recyclerView.adapter = SimpleItemRecyclerViewAdapter(this, result, twoPane)
     }
 
     class SimpleItemRecyclerViewAdapter(private val parentActivity: PhotoItemListActivity,
-                                        private val values: List<DummyContent.DummyItem>,
+                                        private val values: List<PhotoItem>,
                                         private val twoPane: Boolean) :
             RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
 
@@ -67,11 +104,13 @@ class PhotoItemListActivity : AppCompatActivity() {
 
         init {
             onClickListener = View.OnClickListener { v ->
-                val item = v.tag as DummyContent.DummyItem
+                val item = v.tag as PhotoItem
                 if (twoPane) {
                     val fragment = PhotoItemDetailFragment().apply {
                         arguments = Bundle().apply {
-                            putString(PhotoItemDetailFragment.ARG_ITEM_ID, item.id)
+                            putInt(ARG_ITEM_ID, item.id)
+                            putString(ARG_ITEM_TITLE, item.title)
+                            putString(ARG_ITEM_URL, item.url)
                         }
                     }
                     parentActivity.supportFragmentManager
@@ -80,7 +119,9 @@ class PhotoItemListActivity : AppCompatActivity() {
                             .commit()
                 } else {
                     val intent = Intent(v.context, PhotoItemDetailActivity::class.java).apply {
-                        putExtra(PhotoItemDetailFragment.ARG_ITEM_ID, item.id)
+                        this.putExtra(ARG_ITEM_ID, item.id)
+                        this.putExtra(ARG_ITEM_TITLE, item.title)
+                        this.putExtra(ARG_ITEM_URL, item.url)
                     }
                     v.context.startActivity(intent)
                 }
@@ -95,8 +136,8 @@ class PhotoItemListActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = values[position]
-            holder.idView.text = item.id
-            holder.contentView.text = item.content
+            holder.titleTextView.text = item.title
+            Picasso.get().load(item.thumbnailUrl).placeholder(android.R.drawable.ic_menu_gallery).into(holder.thumbnailImageView)
 
             with(holder.itemView) {
                 tag = item
@@ -107,8 +148,17 @@ class PhotoItemListActivity : AppCompatActivity() {
         override fun getItemCount() = values.size
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val idView: TextView = view.id_text
-            val contentView: TextView = view.content
+            val thumbnailImageView: ImageView = view.thumbnailImageView
+            val titleTextView: TextView = view.titleTextView
         }
+    }
+
+    companion object {
+        const val ARG_ITEM_TITLE = "item_title"
+        const val ARG_ADD_MODE = "add_mode"
+        const val ARG_MODE = "mode"
+        const val ARG_ITEM_ID = "item_id"
+        const val ARG_ITEM_URL = "item_url"
+        const val TAG_ERROR = "ERROR"
     }
 }

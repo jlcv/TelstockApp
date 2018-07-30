@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.jchavez.telstockapp">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -21,13 +25,14 @@
         </activity>
         <activity
             android:name=".PhotoItemDetailActivity"
-            android:label="@string/title_photoitem_detail"
+            android:label="@string/title_photo_item_detail"
             android:parentActivityName=".PhotoItemListActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.jchavez.telstockapp.PhotoItemListActivity" />
         </activity>
+        <activity android:name=".PhotoItemEditActivity"></activity>
     </application>
 
 </manifest>
