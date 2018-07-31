@@ -1,6 +1,10 @@
 package com.jchavez.telstockapp
 
+import android.Manifest
+import android.content.ContentResolver
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
@@ -20,21 +24,40 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photoitem_list.*
 import kotlinx.android.synthetic.main.photoitem_list.*
+import android.os.StrictMode
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContentResolverCompat
+import android.support.v4.content.ContextCompat
+import java.io.File
+
 
 class PhotoItemEditActivity : AppCompatActivity() {
 
     private lateinit var currentMode: String
     private var editId: Int = -1
     private lateinit var photoTitle: String
+    private lateinit var uri: String
     private val apiService = ApiService.create()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo_item_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val builder = StrictMode.VmPolicy.Builder()
+        StrictMode.setVmPolicy(builder.build())
+
         val selectImageButton = findViewById<Button>(R.id.selectImageButton)
         selectImageButton.setOnClickListener {
-            ImagePicker.pickImage(this)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Permission is not granted
+                ActivityCompat.requestPermissions(this,
+                        arrayOf(Manifest.permission.CAMERA),
+                        1)
+            } else {
+                ImagePicker.pickImage(this)
+            }
         }
         currentMode = intent.getStringExtra(ARG_MODE)
 
@@ -63,8 +86,15 @@ class PhotoItemEditActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val bitmap = ImagePicker.getImageFromResult(this, requestCode, resultCode, data)
-        val thumbnailImageView = findViewById<ImageView>(R.id.thumbnailImageView)
-        thumbnailImageView.setImageBitmap(bitmap)
+        val thumbnailImageView = findViewById<ImageView>(R.id.editImageView)
+        val resultUri = ImagePicker.getImagePathFromResult(this, requestCode, resultCode, data)
+
+        if (data != null || resultUri != null) {
+            uri = "$resultUri"
+            thumbnailImageView.setImageBitmap(bitmap)
+        } else {
+            thumbnailImageView.setImageDrawable(resources.getDrawable(android.R.drawable.ic_menu_gallery))
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem) =
@@ -137,7 +167,7 @@ class PhotoItemEditActivity : AppCompatActivity() {
 
     private fun postPhoto(title: String) {
         val photoItem = PhotoItem(
-                editId.toInt(),
+                editId,
                 1,
                 title,
                 "http://placehold.it/600/92c952",

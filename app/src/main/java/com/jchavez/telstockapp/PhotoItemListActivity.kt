@@ -74,10 +74,6 @@ class PhotoItemListActivity : AppCompatActivity() {
             Log.d(tagPhotos, "No photos")
         } else {
             Log.d(tagPhotos, "Got results!")
-            Log.d(tagPhotos, result.toString())
-            result.forEach {
-                Log.d(tagPhotos, it.title)
-            }
             setupRecyclerView(photoitem_list, result)
         }
     }
